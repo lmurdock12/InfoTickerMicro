@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <script src="led_color_picker_example.js"></script>
+    </head>
+    <body>
+
+        <h1>Wifi Client setup</h1>
+        <p>Let's get your InfoTicker connected to the wifi!</p>
+
+        <p>Select one of the discovered networks:</p>
+
+        <form name="form-creation" id="form-creation">
+            <script type="text/javascript">addNetworks()</script>
+            <br><br>
+            <label id="passLabel" for="password">Enter Password:</label>
+            
+            <p id="passErr"></p>
+            <input type="text" id="password" value="" name="password"><br>
+
+            <input type="button" value="Select Network" onclick="submitNetwork()">
+
+            
+        </form>
+
+        
+        
+        
+    </body>
+</html>
