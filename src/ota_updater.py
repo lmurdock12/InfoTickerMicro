@@ -7,7 +7,7 @@ class OTAUpdater:
     optimized for low power usage.
     """
 
-    def __init__(self, github_repo, github_src_dir='', module='', main_dir='main', new_version_dir='next', secrets_file=None, headers={}):
+    def __init__(self, github_repo,network_manager, github_src_dir='', module='', main_dir='main', new_version_dir='next', secrets_file=None, headers={}):
         # self.http_client = HttpClient(headers=headers)
         self.github_repo = github_repo.rstrip('/').replace('https://github.com/', '')
         # self.github_src_dir = '' if len(github_src_dir) < 1 else github_src_dir.rstrip('/') + '/'
@@ -15,6 +15,8 @@ class OTAUpdater:
         self.main_dir = main_dir
         # self.new_version_dir = new_version_dir
         # self.secrets_file = secrets_file
+        # TODO: This should never be none, and we 
+        self.network = network_manager
         pass
 
     def __del__(self):
@@ -131,21 +133,21 @@ class OTAUpdater:
 
     def get_latest_version(self):
 
-        latest_release = requests.get('https://api.github.com/repos/{}/releases/latest'.format(self.github_repo))
+        latest_release = self.network.fetch('https://api.github.com/repos/{}/releases/latest'.format(self.github_repo))
+        
         print(latest_release)
         gh_json = latest_release.json()
         version = None
         try:
             version = gh_json['tag_name']
             print("version is: ", version)
-        # except KeyError as e:
-        #     raise ValueError(
-        #         "Release not found: \n",
-        #         "Please ensure rlease is marked as 'latest', rather than pre-release \n",
-        #         "github api message: \n {} \n ".format(gh_json)
-        #     )
-        except:
-            print("did not work")
+        except KeyError as e:
+            raise ValueError(
+                "Release not found: \n",
+                "Please ensure rlease is marked as 'latest', rather than pre-release \n",
+                "github api message: \n {} \n ".format(gh_json)
+            )
+
 
         
         return version
