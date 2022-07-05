@@ -243,7 +243,7 @@ class NetworkManager:
                         passwrd = self.potential_connections["ssids"][curr_ap_ssid]
                         print(curr_ap_ssid)
                         print(passwrd)
-                        self.esp.connect_AP(curr_ap_ssid, passwrd)
+                        self.esp.connect_AP(curr_ap_ssid, passwrd,20)
                         #esp.connect_AP("iPhone","moistslime",20)
                     
                     except Exception as e:
@@ -270,6 +270,40 @@ class NetworkManager:
             )
             print("Ping google.com: %d ms" % self.esp.ping("google.com"))
 
+            print("Testing GET capability: ")
+            TEXT_URL = "http://wifitest.adafruit.com/testwifi/index.html"
+            JSON_GET_URL = "https://httpbin.org/get"
+            JSON_POST_URL = "https://httpbin.org/post"
+            
+            req = requests
+            print("Fetching text from %s" % TEXT_URL)
+            response = req.get(TEXT_URL)
+            print("-" * 40)
+
+            print("Text Response: ", response.text)
+            print("-" * 40)
+            response.close()
+
+            print("Fetching JSON data from %s" % JSON_GET_URL)
+            response = req.get(JSON_GET_URL)
+            print("-" * 40)
+            response.close()
+            print("Fetching JSON data from %s" % JSON_GET_URL)
+            response = req.get(JSON_GET_URL)
+            print("-" * 40)
+            response.close()
+            print("Fetching JSON data from %s" % JSON_GET_URL)
+            response = req.get(JSON_GET_URL)
+            print("-" * 40)
+            response.close()
+            print("Fetching JSON data from %s" % JSON_GET_URL)
+            response = req.get(JSON_GET_URL)
+            print("-" * 40)
+            response.close()
+            print("Fetching JSON data from %s" % JSON_GET_URL)
+            response = req.get(JSON_GET_URL)
+            print("-" * 40)
+            response.close()   
             return True
         else:
             return False
@@ -304,6 +338,7 @@ class NetworkManager:
         print(jsonData["pass"])
         self.esp.disconnect()
 
+        # TODO: Does this update the web UI if it fails?
         print("Time to validate")
         attempts = 1
         max_attempts = 2

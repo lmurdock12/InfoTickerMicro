@@ -31,18 +31,24 @@ netManager.attempt_connection()
 if netManager.check_connection():
     print("We are connected to the internet!")
 
-    gitRepo = "https://github.com/lmurdock12/InfoTicker"
+
+
+    gitRepo = "https://github.com/lmurdock12/InfoTickerMicro"
     otaUpdater = OTAUpdater(gitRepo)
 
     getVersion = otaUpdater.get_version("src")
     print("The version is: ", getVersion)
 
     otaUpdater.get_latest_version()
-
-
+    otaUpdater.get_latest_version()
+    otaUpdater.get_latest_version()
+    otaUpdater.get_latest_version()
+    otaUpdater.get_latest_version()
+    otaUpdater.get_latest_version()
 
 else:
     print(":(")
 
     print("Unsuccessful attempt to connect to wifi...creating an access point instead")
     netManager.run_wifi_server()
+
