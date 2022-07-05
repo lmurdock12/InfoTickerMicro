@@ -11,110 +11,43 @@ from adafruit_matrixportal.network import Network
 
 from secrets import secrets
 
-print("Currently stored secrets:",secrets)
+
 
 net = Network(status_neopixel=board.NEOPIXEL)
+
+print("Currently stored secrets:",secrets)
+for test in net._wifi.esp.get_scan_networks():
+    print("SSID: ",test["ssid"], "RSSI:", test["rssi"])
+
 net.connect()
 print(net._wifi.is_connected)
 
-TEXT_URL = "http://wifitest.adafruit.com/testwifi/index.html"
 
-JSON_GET_URL = "https://api.github.com/repos/adafruit/Adafruit_CircuitPython_MatrixPortal/releases/latest"
+print("Connected to", str(net._wifi.esp.ssid, "utf-8"), "\tRSSI:", net._wifi.esp.rssi)
+print("My IP address is", net._wifi.esp.pretty_ip(net._wifi.esp.ip_address))
+print(
+    "IP lookup adafruit.com: %s" % net._wifi.esp.pretty_ip(net._wifi.esp.get_host_by_name("adafruit.com"))
+)
+print("Ping google.com: %d ms" % net._wifi.esp.ping("google.com"))
 
-res = net.fetch(TEXT_URL)
-print(res)
-res.close()
+gitRepo = "https://github.com/lmurdock12/InfoTickerMicro"
+otaUpdater = OTAUpdater(gitRepo,net,main_dir="src")
 
-
-res = net.fetch(JSON_GET_URL)
-print(res)
-
-
-res = net.fetch(TEXT_URL)
-print(res)
-
-
-res = net.fetch(JSON_GET_URL)
-print(res)
-
-res = net.fetch(TEXT_URL)
-print(res)
-
-
-res = net.fetch(JSON_GET_URL)
-print(res)
-
-
-res = net.fetch(TEXT_URL)
-print(res)
-
-
-
-
-# gitRepo = "https://github.com/lmurdock12/InfoTickerMicro"
-# otaUpdater = OTAUpdater(gitRepo,net)
-
+# print("get version check: ")
 # getVersion = otaUpdater.get_version("src")
 # print("The version is: ", getVersion)
 
-# try:
-#     print("attempting OTA updating: ")
-#     otaUpdater.get_latest_version()
-# except:
-#     print("ERROR")
-#     pass
-# print("_---------------------------------")
-# try:
-#     print("attempting OTA updating: ")
-#     otaUpdater.get_latest_version()
-# except:
-#     print("ERROR")
-#     pass
+# print("get latest version check")
+# otaUpdater.get_latest_version()
+
+# print("check for new version check")
+# otaUpdater._check_for_new_version()
 
 
-print("Success exiting....")
-#otaUpdater.get_latest_version()
-#otaUpdater.get_latest_version()
-#otaUpdater.get_latest_version()
-#otaUpdater.get_latest_version()
-#otaUpdater.get_latest_version()
+otaUpdater.install_update_if_available()
 
-
-# print("ESP32 SPI webclient test")
-
-# try:
-#     import json as json_module
-# except ImportError:
-#     import ujson as json_module
-
-# print("ESP32 SPI simple web server test!")
-
-# status_light = neopixel.NeoPixel(board.NEOPIXEL,1,brightness=0.2)
-# netManager = NetworkManager(status_light)
-# netManager.read_connections()
-# netManager.attempt_connection()
-
-# if netManager.check_connection():
-#     print("We are connected to the internet!")
-
-
-
-#     gitRepo = "https://github.com/lmurdock12/InfoTickerMicro"
-#     otaUpdater = OTAUpdater(gitRepo)
-
-#     getVersion = otaUpdater.get_version("src")
-#     print("The version is: ", getVersion)
-
-#     otaUpdater.get_latest_version()
-#     otaUpdater.get_latest_version()
-#     otaUpdater.get_latest_version()
-#     otaUpdater.get_latest_version()
-#     otaUpdater.get_latest_version()
-#     otaUpdater.get_latest_version()
-
-# else:
-#     print(":(")
-
-#     print("Unsuccessful attempt to connect to wifi...creating an access point instead")
-#     netManager.run_wifi_server()
-
+# print("---------------removal time----------")
+# print(otaUpdater._exists_dir("next"))
+# otaUpdater._rmtree("next")
+# print("----------after removal----------------")
+# print(otaUpdater._exists_dir("next"))

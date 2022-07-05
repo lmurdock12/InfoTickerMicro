@@ -1,4 +1,4 @@
-Adafruit CircuitPython 7.2.5 on 2022-04-06; Adafruit Matrix Portal M4 with samd51j19
+Adafruit CircuitPython 7.3.1 on 2022-06-22; Adafruit Matrix Portal M4 with samd51j19
 Board ID:matrixportal_m4
 boot.py output:
 Concurrent write protection disabled2

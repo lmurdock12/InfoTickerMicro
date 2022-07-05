@@ -276,30 +276,40 @@ class NetworkManager:
             JSON_POST_URL = "https://httpbin.org/post"
             
             req = requests
+            print("Conn: ",self.esp.is_connected)
             print("Fetching text from %s" % TEXT_URL)
             response = req.get(TEXT_URL)
             print("-" * 40)
+            
 
             print("Text Response: ", response.text)
             print("-" * 40)
             response.close()
 
+            print("Conn: ",self.esp.is_connected)
             print("Fetching JSON data from %s" % JSON_GET_URL)
             response = req.get(JSON_GET_URL)
             print("-" * 40)
             response.close()
+
+            print("Conn: ",self.esp.is_connected)            
             print("Fetching JSON data from %s" % JSON_GET_URL)
             response = req.get(JSON_GET_URL)
             print("-" * 40)
             response.close()
+            print("Conn: ",self.esp.is_connected)
             print("Fetching JSON data from %s" % JSON_GET_URL)
             response = req.get(JSON_GET_URL)
             print("-" * 40)
             response.close()
+
+            print("Conn: ",self.esp.is_connected)
             print("Fetching JSON data from %s" % JSON_GET_URL)
             response = req.get(JSON_GET_URL)
             print("-" * 40)
             response.close()
+
+            print("Conn: ",self.esp.is_connected)
             print("Fetching JSON data from %s" % JSON_GET_URL)
             response = req.get(JSON_GET_URL)
             print("-" * 40)

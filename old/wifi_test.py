@@ -18,7 +18,7 @@ except ImportError:
 print("ESP32 SPI webclient test")
 
 TEXT_URL = "http://wifitest.adafruit.com/testwifi/index.html"
-JSON_URL = "http://api.coindesk.com/v1/bpi/currentprice/USD.json"
+JSON_URL = "https://api.github.com/repos/adafruit/Adafruit_CircuitPython_MatrixPortal/releases/latest"
 
 
 # If you are using a board with pre-defined ESP32 Pins:
@@ -58,9 +58,10 @@ for ap in esp.scan_networks():
 print("Connecting to AP...")
 while not esp.is_connected:
     try:
-        esp.connect_AP(secrets["ssid"], secrets["password"])
-    except RuntimeError as e:
-        print("could not connect to AP, retrying: ", e)
+        print("trying to connect")
+        esp.connect_AP(b'SpectrumSetup-2B', b'lotusstudio714')
+    except:
+        print("could not connect to AP, retrying: ")
         continue
 print("Connected to", str(esp.ssid, "utf-8"), "\tRSSI:", esp.rssi)
 print("My IP address is", esp.pretty_ip(esp.ip_address))
@@ -85,4 +86,102 @@ print(r.json())
 print("-" * 40)
 r.close()
 
+print("Fetching text from", TEXT_URL)
+r = requests.get(TEXT_URL)
+print("-" * 40)
+print(r.text)
+print("-" * 40)
+r.close()
+
+print()
+print("Fetching json from", JSON_URL)
+r = requests.get(JSON_URL)
+print("-" * 40)
+print(r.json())
+print("-" * 40)
+r.close()
+print("Fetching text from", TEXT_URL)
+r = requests.get(TEXT_URL)
+print("-" * 40)
+print(r.text)
+print("-" * 40)
+r.close()
+
+print()
+print("Fetching json from", JSON_URL)
+r = requests.get(JSON_URL)
+print("-" * 40)
+print(r.json())
+print("-" * 40)
+r.close()
+print("Fetching text from", TEXT_URL)
+r = requests.get(TEXT_URL)
+print("-" * 40)
+print(r.text)
+print("-" * 40)
+r.close()
+
+print()
+print("Fetching json from", JSON_URL)
+r = requests.get(JSON_URL)
+print("-" * 40)
+print(r.json())
+print("-" * 40)
+r.close()
+print("Fetching text from", TEXT_URL)
+r = requests.get(TEXT_URL)
+print("-" * 40)
+print(r.text)
+print("-" * 40)
+r.close()
+
+print()
+print("Fetching json from", JSON_URL)
+r = requests.get(JSON_URL)
+print("-" * 40)
+print(r.json())
+print("-" * 40)
+r.close()
+print("Fetching text from", TEXT_URL)
+r = requests.get(TEXT_URL)
+print("-" * 40)
+print(r.text)
+print("-" * 40)
+r.close()
+
+print()
+print("Fetching json from", JSON_URL)
+r = requests.get(JSON_URL)
+print("-" * 40)
+print(r.json())
+print("-" * 40)
+r.close()
+
 print("Done!")# Write your code here :-)
+
+
+# TEXT_URL = "http://wifitest.adafruit.com/testwifi/index.html"
+
+# JSON_GET_URL = "https://api.github.com/repos/adafruit/Adafruit_CircuitPython_MatrixPortal/releases/latest"
+
+# count = 0
+# attempts = 0
+# while count < 5:
+#     attempts += 1
+#     print("Attempts #: ",attempts)
+#     try:
+
+#         res = net.fetch(TEXT_URL,timeout=20)
+#         print(res)
+
+#         res = net.fetch(JSON_GET_URL,timeout=20)
+#         print(res)
+#         count += 1
+
+#     except RunimeError as e:
+#         print("errorrrrr:",e)
+#         pass
+
+# TEXT_URL = "http://wifitest.adafruit.com/testwifi/index.html"
+
+# JSON_GET_URL = "https://api.github.com/repos/adafruit/Adafruit_CircuitPython_MatrixPortal/releases/latest"

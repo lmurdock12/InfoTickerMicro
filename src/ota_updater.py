@@ -10,10 +10,13 @@ class OTAUpdater:
     def __init__(self, github_repo,network_manager, github_src_dir='', module='', main_dir='main', new_version_dir='next', secrets_file=None, headers={}):
         # self.http_client = HttpClient(headers=headers)
         self.github_repo = github_repo.rstrip('/').replace('https://github.com/', '')
-        # self.github_src_dir = '' if len(github_src_dir) < 1 else github_src_dir.rstrip('/') + '/'
-        # self.module = module.rstrip('/')
+        print("Github repo: ",self.github_repo)
+        self.github_src_dir = '' if len(github_src_dir) < 1 else github_src_dir.rstrip('/') + '/'
+        print("Github SRC dir: ",self.github_src_dir)
+
+        self.module = module.rstrip('/')
         self.main_dir = main_dir
-        # self.new_version_dir = new_version_dir
+        self.new_version_dir = new_version_dir
         # self.secrets_file = secrets_file
         # TODO: This should never be none, and we 
         self.network = network_manager
@@ -77,19 +80,18 @@ class OTAUpdater:
             bool: true if a new version is available, false otherwise
         """
 
-        # (current_version, latest_version) = self._check_for_new_version()
-        # if latest_version > current_version:
-        #     print('Updating to version {}...'.format(latest_version))
-        #     self._create_new_version_file(latest_version)
-        #     self._download_new_version(latest_version)
+        (current_version, latest_version) = self._check_for_new_version()
+        if latest_version > current_version:
+            print('Updating to version {}...'.format(latest_version))
+            self._create_new_version_file(latest_version)
+
+            self._download_new_version(latest_version)
         #     self._copy_secrets_file()
         #     self._delete_old_version()
         #     self._install_new_version()
-        #     return True
+            return True
         
-        # return False
-        pass
-
+        return False
 
     @staticmethod
     def _using_network(ssid, password):
@@ -105,25 +107,30 @@ class OTAUpdater:
         pass
 
     def _check_for_new_version(self):
-        # current_version = self.get_version(self.modulepath(self.main_dir))
-        # latest_version = self.get_latest_version()
 
-        # print('Checking version... ')
-        # print('\tCurrent version: ', current_version)
-        # print('\tLatest version: ', latest_version)
-        # return (current_version, latest_version)
-        pass
+        current_version = self.get_version(self.modulepath(self.main_dir))
+        latest_version = self.get_latest_version()
+
+        print('Checking version... ')
+        print('\tCurrent version: ', current_version)
+        print('\tLatest version: ', latest_version)
+        return (current_version, latest_version)
+
 
     def _create_new_version_file(self, latest_version):
-        # self.mkdir(self.modulepath(self.new_version_dir))
-        # with open(self.modulepath(self.new_version_dir + '/.version'), 'w') as versionfile:
-        #     versionfile.write(latest_version)
-        #     versionfile.close()
-        pass
+        #Creates folder for new version code to go and then creates
+        #The updated .version file with the latest version
+
+        self.mkdir(self.modulepath(self.new_version_dir))
+        with open(self.modulepath(self.new_version_dir + '/.version'), 'w') as versionfile:
+            versionfile.write(latest_version)
+            versionfile.close()
+
 
     def get_version(self, directory, version_file_name='.version'):
-        #Grabs the version (single integer) from a given directory name and file name
-        print(os.listdir("src"))
+        #Grabs the version (single integer) from a given directory name and file 
+        print("Attempting to get the version for directory: ",directory)
+        print(os.listdir(directory))
         if version_file_name in os.listdir(directory):
             with open(directory + '/' + version_file_name) as f:
                 version = f.read()
@@ -133,7 +140,14 @@ class OTAUpdater:
 
     def get_latest_version(self):
 
-        latest_release = self.network.fetch('https://api.github.com/repos/{}/releases/latest'.format(self.github_repo))
+        latest_release = None
+        while latest_release == None:
+            try:
+                latest_release = self.network.fetch('https://api.github.com/repos/{}/releases/latest'.format(self.github_repo))
+            except RuntimeError as e:
+                print("Runtime error: ",e)
+                self.network._wifi.esp.reset()
+                continue
         
         print(latest_release)
         gh_json = latest_release.json()
@@ -148,39 +162,50 @@ class OTAUpdater:
                 "github api message: \n {} \n ".format(gh_json)
             )
 
-
-        
         return version
 
     def _download_new_version(self, version):
-        # print('Downloading version {}'.format(version))
-        # self._download_all_files(version)
-        # print('Version {} downloaded to {}'.format(version, self.modulepath(self.new_version_dir)))
-        pass
+        print('Downloading version {}'.format(version))
+        self._download_all_files(version)
+        print('Version {} downloaded to {}'.format(version, self.modulepath(self.new_version_dir)))
 
     def _download_all_files(self, version, sub_dir=''):
-        # url = 'https://api.github.com/repos/{}/contents{}{}{}?ref=refs/tags/{}'.format(self.github_repo, self.github_src_dir, self.main_dir, sub_dir, version)
-        # gc.collect() 
-        # file_list = self.http_client.get(url)
-        # file_list_json = file_list.json()
-        # for file in file_list_json:
-        #     path = self.modulepath(self.new_version_dir + '/' + file['path'].replace(self.main_dir + '/', '').replace(self.github_src_dir, ''))
-        #     if file['type'] == 'file':
-        #         gitPath = file['path']
-        #         print('\tDownloading: ', gitPath, 'to', path)
-        #         self._download_file(version, gitPath, path)
-        #     elif file['type'] == 'dir':
-        #         print('Creating dir', path)
-        #         self.mkdir(path)
-        #         self._download_all_files(version, sub_dir + '/' + file['name'])
-        #     gc.collect()
+        url = 'https://api.github.com/repos/{}/contents{}{}{}?ref=refs/tags/{}'.format(self.github_repo, self.github_src_dir, self.main_dir, sub_dir, version)
+        print(url)
+        gc.collect() 
+        file_list = self.network.fetch(url)
+        file_list_json = file_list.json()
 
-        # file_list.close()
-        pass
+        for file in file_list_json:
+            path = self.modulepath(self.new_version_dir + '/' + file['path'].replace(self.main_dir + '/', '').replace(self.github_src_dir, ''))
+            print("new path:", path)
+            if file['type'] == 'file':
+                gitPath = file['path']
+                print('\tDownloading: ', gitPath, 'to', path)
+                self._download_file(version, gitPath, path)
+            elif file['type'] == 'dir':
+                print('Creating dir', path)
+                self.mkdir(path)
+                self._download_all_files(version, sub_dir + '/' + file['name'])
+            
+            print(self.new_version_dir, "status:")
+            self._exists_dir(self.modulepath(self.new_version_dir))
+
+            gc.collect()
+
+        file_list.close()
+
 
     def _download_file(self, version, gitPath, path):
-        # self.http_client.get('https://raw.githubusercontent.com/{}/{}/{}'.format(self.github_repo, version, gitPath), saveToFile=path)
-        pass
+        try:
+            gc.collect()
+            print("mem status: ",gc.mem_free())
+            
+            self.network.wget('https://raw.githubusercontent.com/{}/{}/{}'.format(self.github_repo, version, gitPath),path)
+            gc.collect()
+        except MemoryError as e:
+            print("Error: ", e)
+
 
     def _copy_secrets_file(self):
         # if self.secrets_file:
@@ -208,14 +233,15 @@ class OTAUpdater:
         pass
 
     def _rmtree(self, directory):
-        # for entry in os.ilistdir(directory):
-        #     is_dir = entry[1] == 0x4000
-        #     if is_dir:
-        #         self._rmtree(directory + '/' + entry[0])
-        #     else:
-        #         os.remove(directory + '/' + entry[0])
-        # os.rmdir(directory)
-        pass
+        for entry in os.listdir(directory):
+            print("removing:",entry)
+            is_dir = entry[1] == 0x4000
+            if is_dir:
+                self._rmtree(directory + '/' + entry)
+            else:
+                os.remove(directory + '/' + entry)
+        os.rmdir(directory)
+
 
     def _os_supports_rename(self) -> bool:
         # self._mk_dirs('otaUpdater/osRenameTest')
@@ -250,32 +276,33 @@ class OTAUpdater:
         pass
 
     def _exists_dir(self, path) -> bool:
-        # try:
-        #     os.listdir(path)
-        #     return True
-        # except:
-        #     return False
-        pass
+        try:
+            os.listdir(path)
+            print(os.listdir(path))
+            return True
+        except:
+            return False
+
 
     def _mk_dirs(self, path:str):
-        # paths = path.split('/')
+        paths = path.split('/')
 
-        # pathToCreate = ''
-        # for x in paths:
-        #     self.mkdir(pathToCreate + x)
-        #     pathToCreate = pathToCreate + x + '/'
-        pass
+        pathToCreate = ''
+        for x in paths:
+            self.mkdir(pathToCreate + x)
+            pathToCreate = pathToCreate + x + '/'
+
 
     # different micropython versions act differently when directory already exists
     def mkdir(self, path:str):
-        # try:
-        #     os.mkdir(path)
-        # except OSError as exc:
-        #     if exc.args[0] == 17: 
-        #         pass
-        pass
+        try:
+            os.mkdir(path)
+        except OSError as exc:
+            if exc.args[0] == 17: 
+                pass
+
 
 
     def modulepath(self, path):
-        # return self.module + '/' + path if self.module else path
-        pass
+        print("Module path called: adding ", self.module, "with",path)
+        return self.module + '/' + path if self.module else path
