@@ -44,7 +44,7 @@ otaUpdater = OTAUpdater(gitRepo,net,main_dir="src")
 # otaUpdater._check_for_new_version()
 
 
-otaUpdater.install_update_if_available()
+#otaUpdater.install_update_if_available()
 
 # print("---------------removal time----------")
 # print(otaUpdater._exists_dir("next"))

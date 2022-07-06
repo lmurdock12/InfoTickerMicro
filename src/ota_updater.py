@@ -87,8 +87,8 @@ class OTAUpdater:
 
             self._download_new_version(latest_version)
         #     self._copy_secrets_file()
-        #     self._delete_old_version()
-        #     self._install_new_version()
+            self._delete_old_version()
+            self._install_new_version()
             return True
         
         return False
@@ -182,7 +182,11 @@ class OTAUpdater:
             if file['type'] == 'file':
                 gitPath = file['path']
                 print('\tDownloading: ', gitPath, 'to', path)
-                self._download_file(version, gitPath, path)
+                gc.collect()
+                print("mem status: ",gc.mem_free())
+                self.network.wget('https://raw.githubusercontent.com/{}/{}/{}'.format(self.github_repo, version, gitPath),path,chunk_size=500)
+                gc.collect()
+
             elif file['type'] == 'dir':
                 print('Creating dir', path)
                 self.mkdir(path)
@@ -196,22 +200,6 @@ class OTAUpdater:
         file_list.close()
 
 
-    def _download_file(self, version, gitPath, path):
-        try:
-            gc.collect()
-            print("mem status: ",gc.mem_free())
-
-            self.network.wget('https://raw.githubusercontent.com/{}/{}/{}'.format(self.github_repo, version, gitPath),path,chunk_size=5000)
-            # print(res.status_code)
-            # with open(path, "wb") as file:
-
-            #         file.write(res.content)
-
-        except MemoryError as e:
-            print("Error: ", e)
-
-
-
     def _copy_secrets_file(self):
         # if self.secrets_file:
         #     fromPath = self.modulepath(self.main_dir + '/' + self.secrets_file)
@@ -222,20 +210,20 @@ class OTAUpdater:
         pass
 
     def _delete_old_version(self):
-        # print('Deleting old version at {} ...'.format(self.modulepath(self.main_dir)))
-        # self._rmtree(self.modulepath(self.main_dir))
-        # print('Deleted old version at {} ...'.format(self.modulepath(self.main_dir)))
+        print('Deleting old version at {} ...'.format(self.modulepath(self.main_dir)))
+        self._rmtree(self.modulepath(self.main_dir))
+        print('Deleted old version at {} ...'.format(self.modulepath(self.main_dir)))
         pass
 
     def _install_new_version(self):
-        # print('Installing new version at {} ...'.format(self.modulepath(self.main_dir)))
-        # if self._os_supports_rename():
-        #     os.rename(self.modulepath(self.new_version_dir), self.modulepath(self.main_dir))
-        # else:
-        #     self._copy_directory(self.modulepath(self.new_version_dir), self.modulepath(self.main_dir))
-        #     self._rmtree(self.modulepath(self.new_version_dir))
-        # print('Update installed, please reboot now')
-        pass
+        print('Installing new version at {} ...'.format(self.modulepath(self.main_dir)))
+        if self._os_supports_rename():
+            os.rename(self.modulepath(self.new_version_dir), self.modulepath(self.main_dir))
+        else:
+            self._copy_directory(self.modulepath(self.new_version_dir), self.modulepath(self.main_dir))
+            self._rmtree(self.modulepath(self.new_version_dir))
+        print('Update installed, please reboot now')
+
 
     def _rmtree(self, directory):
         for entry in os.listdir(directory):
@@ -249,36 +237,36 @@ class OTAUpdater:
 
 
     def _os_supports_rename(self) -> bool:
-        # self._mk_dirs('otaUpdater/osRenameTest')
-        # os.rename('otaUpdater', 'otaUpdated')
-        # result = len(os.listdir('otaUpdated')) > 0
-        # self._rmtree('otaUpdated')
-        # return result
-        pass
+        self._mk_dirs('otaUpdater/osRenameTest')
+        os.rename('otaUpdater', 'otaUpdated')
+        result = len(os.listdir('otaUpdated')) > 0
+        self._rmtree('otaUpdated')
+        return result
+
 
     def _copy_directory(self, fromPath, toPath):
-        # if not self._exists_dir(toPath):
-        #     self._mk_dirs(toPath)
+        if not self._exists_dir(toPath):
+            self._mk_dirs(toPath)
 
-        # for entry in os.ilistdir(fromPath):
-        #     is_dir = entry[1] == 0x4000
-        #     if is_dir:
-        #         self._copy_directory(fromPath + '/' + entry[0], toPath + '/' + entry[0])
-        #     else:
-        #         self._copy_file(fromPath + '/' + entry[0], toPath + '/' + entry[0])
-        pass
+        for entry in os.ilistdir(fromPath):
+            is_dir = entry[1] == 0x4000
+            if is_dir:
+                self._copy_directory(fromPath + '/' + entry[0], toPath + '/' + entry[0])
+            else:
+                self._copy_file(fromPath + '/' + entry[0], toPath + '/' + entry[0])
+
 
     def _copy_file(self, fromPath, toPath):
-        # with open(fromPath) as fromFile:
-        #     with open(toPath, 'w') as toFile:
-        #         CHUNK_SIZE = 512 # bytes
-        #         data = fromFile.read(CHUNK_SIZE)
-        #         while data:
-        #             toFile.write(data)
-        #             data = fromFile.read(CHUNK_SIZE)
-        #     toFile.close()
-        # fromFile.close()
-        pass
+        with open(fromPath) as fromFile:
+            with open(toPath, 'w') as toFile:
+                CHUNK_SIZE = 512 # bytes
+                data = fromFile.read(CHUNK_SIZE)
+                while data:
+                    toFile.write(data)
+                    data = fromFile.read(CHUNK_SIZE)
+            toFile.close()
+        fromFile.close()
+
 
     def _exists_dir(self, path) -> bool:
         try:
