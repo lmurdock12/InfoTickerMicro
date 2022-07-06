@@ -1,1 +1,5 @@
-{"ssids": {"iPhone": "moistslime", "My ESP32 AP!": "supersecret", "MarriottBonvoy_Guest": "test"}}
+{
+    "ssid": "iPhone",
+    "password":"moistslime"
+
+}

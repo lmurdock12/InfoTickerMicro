@@ -122,6 +122,135 @@ class SimpleWSGIApplication:
         return "text/plain"
 
 
+class HotSpotHandler:
+
+    def __init__(self,wifi_manager):
+
+        self.wifi_manager = wifi_manager
+
+        static = "src/static"
+        try:
+            static_files = os.listdir(static)
+            if "index.html" not in static_files:
+                raise RuntimeError(
+                    """
+                    This example depends on an index.html, but it isn't present.
+                    Please add it to the {0} directory""".format(
+                        static
+                    )
+                )
+
+        except (OSError) as e:
+            raise RuntimeError(
+                """
+                This example depends on a static asset directory.
+                Please create one named {0} in the root of the device filesystem.""".format(
+                    static
+                )
+            ) from e
+        self.web_app = SimpleWSGIApplication(static_dir="src/static")
+        self.web_app.on("GET", "/led_on", self.led_on)
+        self.web_app.on("GET", "/led_off", self.led_off)
+        self.web_app.on("POST", "/ajax/ledcolor", self.led_color)
+        self.web_app.on("GET","/ajax/ssids",self.curr_ssids)
+        self.web_app.on("POST","/setWifi",self.set_wifi) 
+
+        self.netList = self.scan_networks()   
+
+    def scan_networks(self):
+
+        print("rescanning networks")
+
+        nets = self.wifi_manager.esp.scan_networks()
+        networkList  = []
+        for net in nets:
+            curr_ap_ssid = str(net["ssid"],"utf-8")
+
+            if curr_ap_ssid not in networkList:
+                networkList.append(curr_ap_ssid)
+
+        print(networkList)
+        return {'ssids':networkList}
+
+
+    # Our HTTP Request handlers
+    def led_on(self,environ):  # pylint: disable=unused-argument
+        print("led on!")
+        #self.status_light.fill((0, 0, 100))
+        return self.web_app.serve_file("src/static/index.html")
+    def led_off(self,environ):  # pylint: disable=unused-argument
+        print("led off!")
+        self.status_light.fill(0)
+        return self.web_app.serve_file("static/index.html")
+    def led_color(self,environ):  # pylint: disable=unused-argument
+        json = json_module.loads(environ["wsgi.input"].getvalue())
+        print(json)
+        rgb_tuple = (json.get("r"), json.get("g"), json.get("b"))
+        self.status_light.fill(rgb_tuple)
+        return ("200 OK", [], [])
+
+    def curr_ssids(self,environ):
+        
+
+
+        jsonNets = json.dumps(self.netList)
+        print(jsonNets)
+        headers = [("Content-Type","application/json")]
+        
+        return ("200 OK",headers,jsonNets)
+
+    def set_wifi(self,environ):
+
+        print("GOT /setWifi request")
+        jsonData = json_module.loads(environ["wsgi.input"].getvalue())
+        print(jsonData["ssid"])
+        print(jsonData["pass"])
+        self.wifi_manager.esp.disconnect()
+
+        conn_data = {"ssid":jsonData["ssid"],"password":jsonData["pass"]}
+
+        print("new conn data:")
+        print(conn_data)
+
+        with open("src/conn.json","w") as conn_file:
+
+            print("opened the conn file")
+            json.dump(conn_data,conn_file)
+        
+        print("Saved the connection to the conn.json file")
+
+        print("Successfully connected to wifi network, resetting board...")
+        supervisor.reload()
+
+
+    def run_wifi_server(self):
+        #Starting WIFI service
+        
+        #Create the access point and the HTML page
+        self.wifi_manager.create_ap()
+
+        # Here we setup our server, passing in our web_app as the application
+        server.set_interface(self.wifi_manager.esp)
+        wsgiServer = server.WSGIServer(80, application=self.web_app)
+
+        print("open this IP in your browser: ", self.wifi_manager.esp.pretty_ip(self.wifi_manager.esp.ip_address))
+
+        # Start the server
+        wsgiServer.start()
+        while True:
+            # Our main loop where we have the server poll for incoming requests
+            try:
+                wsgiServer.update_poll()
+                # Could do any other background tasks here, like reading sensors
+            except (ValueError, RuntimeError) as e:
+                print("Failed to update server, restarting ESP32\n", e)
+                self.esp.reset()
+                
+                #TODO: Need error handling and resetting at somepoint...or just reboot the whole board
+
+                continue
+
+
 class NetworkManager:
 
     def __init__(self,status_light):
@@ -337,7 +466,8 @@ class NetworkManager:
     def curr_ssids(self,environ):
         jsonNets = json.dumps(self.scan_networks())
         headers = [("Content-Type","application/json")]
-        
+
+        return self.web_app.serve_file("src/static/index.html")
         return ("200 OK",headers,jsonNets)
 
     def set_wifi(self,environ):
