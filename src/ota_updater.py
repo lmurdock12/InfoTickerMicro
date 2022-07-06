@@ -173,7 +173,17 @@ class OTAUpdater:
         url = 'https://api.github.com/repos/{}/contents{}{}{}?ref=refs/tags/{}'.format(self.github_repo, self.github_src_dir, self.main_dir, sub_dir, version)
         print(url)
         gc.collect() 
-        file_list = self.network.fetch(url)
+
+        success = False
+        file_list = None
+        while not success:
+            try:
+                file_list = self.network.fetch(url)
+                success = True
+            except RuntimeError as e:
+                print("RUNTIME ERROR: ",e)
+                continue
+
         file_list_json = file_list.json()
 
         for file in file_list_json:
@@ -181,11 +191,21 @@ class OTAUpdater:
             print("new path:", path)
             if file['type'] == 'file':
                 gitPath = file['path']
-                print('\tDownloading: ', gitPath, 'to', path)
-                gc.collect()
-                print("mem status: ",gc.mem_free())
-                self.network.wget('https://raw.githubusercontent.com/{}/{}/{}'.format(self.github_repo, version, gitPath),path,chunk_size=500)
-                gc.collect()
+                
+                success = False
+                while not success:
+                    try:
+                        print('\tDownloading: ', gitPath, 'to', path)
+                        
+                        gc.collect()
+                        print("mem status: ",gc.mem_free())
+                        self.network.wget('https://raw.githubusercontent.com/{}/{}/{}'.format(self.github_repo, version, gitPath),path,chunk_size=500)
+                        gc.collect()
+                        success = True
+                        
+                    except RuntimeError as e:
+                        print("RUNTIME ERROR: ",e)
+                        continue
 
             elif file['type'] == 'dir':
                 print('Creating dir', path)
