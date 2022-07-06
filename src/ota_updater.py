@@ -17,11 +17,16 @@ class OTAUpdater:
         self.module = module.rstrip('/')
         self.main_dir = main_dir
         self.new_version_dir = new_version_dir
+        self.code_file = "code.py"
+        self.boot_file = "boot.py"
         # self.secrets_file = secrets_file
         # TODO: This should never be none, and we 
         self.network = network_manager
         pass
 
+    def __del__(self):
+        # self.http_client = None
+        pass
 
     def check_for_update_to_install_during_next_reboot(self) -> bool:
         """Function which will check the GitHub repo if there is a newer version available.
@@ -81,7 +86,6 @@ class OTAUpdater:
         if latest_version > current_version:
             print('Updating to version {}...'.format(latest_version))
             self._create_new_version_file(latest_version)
-
             self._download_new_version(latest_version)
         #     self._copy_secrets_file()
             self._delete_old_version()
@@ -166,6 +170,12 @@ class OTAUpdater:
         self._download_all_files(version)
         print('Version {} downloaded to {}'.format(version, self.modulepath(self.new_version_dir)))
 
+        print('Downloading boot.py, code.py version {}'.format(version))
+        self._download_main_files(version)
+        print('Version {} downloaded to root'.format(version))
+              
+
+
     def _download_all_files(self, version, sub_dir=''):
         url = 'https://api.github.com/repos/{}/contents{}{}{}?ref=refs/tags/{}'.format(self.github_repo, self.github_src_dir, self.main_dir, sub_dir, version)
         print(url)
@@ -217,6 +227,38 @@ class OTAUpdater:
         file_list.close()
 
 
+    def _download_main_files(self, version, sub_dir=''):
+
+
+        new_code_path = self.modulepath("new_code.py")
+        print("new code path: ",new_code_path)
+        new_boot_path = self.modulepath("new_boot.py")
+        print("new boot path: ",new_boot_path)
+        
+        success = False
+        while not success:
+            try:
+                print('\tDownloading: boot.py and code.py')
+                
+                gc.collect()
+                print("mem status: ",gc.mem_free())
+                self.network.wget('https://raw.githubusercontent.com/{}/{}/code.py'.format(self.github_repo, version),new_code_path,chunk_size=500)
+                gc.collect()
+                self.network.wget('https://raw.githubusercontent.com/{}/{}/boot.py'.format(self.github_repo, version),new_boot_path,chunk_size=500)
+                gc.collect()
+                success = True
+                
+            except RuntimeError as e:
+                print("RUNTIME ERROR: ",e)
+                continue
+
+
+            print("root status:")
+            os.listdir()
+
+            gc.collect()
+
+          
     def _copy_secrets_file(self):
         # if self.secrets_file:
         #     fromPath = self.modulepath(self.main_dir + '/' + self.secrets_file)
@@ -230,7 +272,12 @@ class OTAUpdater:
         print('Deleting old version at {} ...'.format(self.modulepath(self.main_dir)))
         self._rmtree(self.modulepath(self.main_dir))
         print('Deleted old version at {} ...'.format(self.modulepath(self.main_dir)))
-        pass
+        
+        #Remove code.py and root.py in main directory
+        os.remove("boot.py")
+        os.remove("code.py")
+
+
 
     def _install_new_version(self):
         print('Installing new version at {} ...'.format(self.modulepath(self.main_dir)))
@@ -241,6 +288,10 @@ class OTAUpdater:
             print("MANUALLY COPYING")
             self._copy_directory(self.modulepath(self.new_version_dir), self.modulepath(self.main_dir))
             self._rmtree(self.modulepath(self.new_version_dir))
+
+        #Rename the code.py and boot.py files
+        os.rename("new_code.py","code.py")
+        os.rename("new_boot.py","boot.py")
 
         print(os.listdir())
         print(os.listdir("src"))
