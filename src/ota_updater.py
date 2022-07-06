@@ -218,17 +218,23 @@ class OTAUpdater:
     def _install_new_version(self):
         print('Installing new version at {} ...'.format(self.modulepath(self.main_dir)))
         if self._os_supports_rename():
+            print("SUPPORTS RENAMING")
             os.rename(self.modulepath(self.new_version_dir), self.modulepath(self.main_dir))
         else:
+            print("MANUALLY COPYING")
             self._copy_directory(self.modulepath(self.new_version_dir), self.modulepath(self.main_dir))
             self._rmtree(self.modulepath(self.new_version_dir))
+
+        print(os.listdir())
+        print(os.listdir("src"))
         print('Update installed, please reboot now')
 
 
     def _rmtree(self, directory):
         for entry in os.listdir(directory):
             print("removing:",entry)
-            is_dir = entry[1] == 0x4000
+            stats = os.stat(directory + "/" + entry)
+            is_dir = stats[0] & 0x4000
             if is_dir:
                 self._rmtree(directory + '/' + entry)
             else:
@@ -241,6 +247,7 @@ class OTAUpdater:
         os.rename('otaUpdater', 'otaUpdated')
         result = len(os.listdir('otaUpdated')) > 0
         self._rmtree('otaUpdated')
+        print("OS SUPPORTS RENAMING: ",result)
         return result
 
 
@@ -249,11 +256,12 @@ class OTAUpdater:
             self._mk_dirs(toPath)
 
         for entry in os.ilistdir(fromPath):
-            is_dir = entry[1] == 0x4000
+            stats = os.stat(fromPath + "/" + entry)
+            is_dir = stats[0] & 0x4000
             if is_dir:
-                self._copy_directory(fromPath + '/' + entry[0], toPath + '/' + entry[0])
+                self._copy_directory(fromPath + '/' + entry, toPath + '/' + entry)
             else:
-                self._copy_file(fromPath + '/' + entry[0], toPath + '/' + entry[0])
+                self._copy_file(fromPath + '/' + entry, toPath + '/' + entry)
 
 
     def _copy_file(self, fromPath, toPath):
