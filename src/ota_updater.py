@@ -200,11 +200,16 @@ class OTAUpdater:
         try:
             gc.collect()
             print("mem status: ",gc.mem_free())
-            
-            self.network.wget('https://raw.githubusercontent.com/{}/{}/{}'.format(self.github_repo, version, gitPath),path)
-            gc.collect()
+
+            self.network.wget('https://raw.githubusercontent.com/{}/{}/{}'.format(self.github_repo, version, gitPath),path,chunk_size=5000)
+            # print(res.status_code)
+            # with open(path, "wb") as file:
+
+            #         file.write(res.content)
+
         except MemoryError as e:
             print("Error: ", e)
+
 
 
     def _copy_secrets_file(self):
