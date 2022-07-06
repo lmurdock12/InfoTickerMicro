@@ -3,7 +3,7 @@
 
 
 import board
-
+import gc
 from src.NetworkManager import NetworkManager
 from src.ota_updater import OTAUpdater
 from adafruit_matrixportal.network import Network
@@ -11,7 +11,8 @@ from adafruit_matrixportal.network import Network
 
 from secrets import secrets
 
-
+from digitalio import DigitalInOut, Pull
+from adafruit_debouncer import Debouncer
 
 net = Network(status_neopixel=board.NEOPIXEL)
 
@@ -32,6 +33,9 @@ print("Ping google.com: %d ms" % net._wifi.esp.ping("google.com"))
 
 gitRepo = "https://github.com/lmurdock12/InfoTickerMicro"
 otaUpdater = OTAUpdater(gitRepo,net,main_dir="src")
+gc.collect()
+otaUpdater2 = OTAUpdater(gitRepo,net,main_dir="lib",new_version_dir="nextlib")
+
 
 # print("get version check: ")
 # getVersion = otaUpdater.get_version("src")
@@ -43,8 +47,29 @@ otaUpdater = OTAUpdater(gitRepo,net,main_dir="src")
 # print("check for new version check")
 # otaUpdater._check_for_new_version()
 
+pin_down = DigitalInOut(board.BUTTON_DOWN)
+pin_down.switch_to_input(pull=Pull.UP)
+button_down = Debouncer(pin_down)
+pin_up = DigitalInOut(board.BUTTON_UP)
+pin_up.switch_to_input(pull=Pull.UP)
+button_up = Debouncer(pin_up)
 
-#otaUpdater.install_update_if_available()
+print("starting cycle")
+while True:
+    button_up.update()
+    button_down.update()
+
+    if button_up.fell:
+        gc.collect()
+        otaUpdater.install_update_if_available()
+        gc.collect()
+        print("installing the libs now")
+        otaUpdater2.install_update_if_available()
+        gc.collect()
+    if button_down.fell:
+        break
+
+print("Goodbye")
 
 # print("---------------removal time----------")
 # print(otaUpdater._exists_dir("next"))
