@@ -7,9 +7,7 @@
 
 
 secrets = {
-	"networks": [
-    {
-        "ssid": "iPhone",
-        "password":"moistslime",
-    }]
+    "ssid": "iPhone",
+    "password":"moistslime",
+
 }
